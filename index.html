@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>olIMpo | MarIri</title>
+    <meta name="description" content="olIMpo: Nuestra marca, con orgullo.">
+    <!-- Leaflet CSS para Mapas -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Favicon -->
+    <link rel="icon" href="img/favicon.png" type="image/png">
+    
+    <!-- Ionicons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script src="js/app.js" defer></script>
+</head>
+
+<body>
+
+    <!-- Navegación -->
+    <header class="header">
+        <div class="container nav">
+            <a href="index.html" class="nav-logo" style="display: flex; align-items: center; gap: 10px;">
+                <h1>ol<span class="orange">IM</span>po</h1>
+                <img src="img/logo.png" alt="olIMpo Logo" class="mobile-logo" style="height: 40px; width: auto; object-fit: contain; display: none;" onerror="this.style.display='none'">
+            </a>
+            <ul class="nav-links">
+                <li><a href="#rutas">Actividades</a></li>
+                <li><a href="#productos">Productos</a></li>
+                <li id="cloud-save-container" style="display:none;">
+                    <button class="btn btn-primary" onclick="saveToCloud()"
+                        style="padding: 0.5rem 1rem; font-size: 0.8rem;">☁ Guardar</button>
+                </li>
+                <li>
+                    <button id="editor-toggle-btn" class="editor-icon-btn" title="Activar/Desactivar Modo Editor">
+                        <ion-icon name="create-outline"></ion-icon>
+                    </button>
+                </li>
+                <li class="desktop-logo" style="margin-left: 15px; display: flex; align-items: center;">
+                    <!-- Aquí va el logo. Si no se encuentra, se oculta automáticamente -->
+                    <img src="img/logo.png" alt="olIMpo Logo" id="navbar-logo"
+                        style="height: 40px; width: auto; object-fit: contain;" onerror="this.style.display='none'">
+                </li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Zona Hero/Inicio -->
+    <section class="section hero" id="hero-section" style="position: relative;">
+        <div id="hero-editor-container"></div>
+        <div class="container text-center">
+            <h2 class="hero-title" id="hero-title"> </h2>
+            <p class="hero-subtitle cursive" id="hero-subtitle"> </p>
+            <div class="hero-actions">
+                <a href="#rutas" class="btn btn-primary">Descubrir Actividades</a>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- Sección Actividades -->
+    <section id="rutas" class="section" style="background-color: var(--c-surface);">
+        <div class="container" style="position: relative;">
+            <div id="rutas-editor-container"></div>
+            <h2 class="section-title text-center" id="rutas-title"> </h2>
+            <p class="text-center text-muted" id="rutas-subtitle" style="margin-bottom: var(--space-lg);"> </p>
+
+            <div id="rutas-container">
+                <!-- Se rellena dinámicamente -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección Productos -->
+    <section id="productos" class="section">
+        <div class="container" style="position: relative;">
+            <div id="productos-editor-container"></div>
+            <h2 class="section-title text-center" id="productos-title"> </h2>
+            <p class="text-center text-muted" id="productos-subtitle" style="margin-bottom: var(--space-lg);"> </p>
+
+            <div class="products-grid" id="productos-container">
+                <!-- Se rellena dinámicamente -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="cursive">&copy; 2026 olIMpo. Always better.</p>
+        </div>
+    </footer>
+
+
+    <!-- Scripts de Mapas (Leaflet + GPX) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/2.1.2/gpx.min.js"></script>
+
+    <!-- Modal Global del Editor -->
+    <div id="editor-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Añadir</h3>
+                <button class="modal-close" onclick="closeModal()"><ion-icon name="close"></ion-icon></button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Se rellena dinámicamente con JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal()" style="background:#eee; color:#333;">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveModal()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
