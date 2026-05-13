@@ -121,16 +121,16 @@ window.saveToCloud = async function () {
 
 // --- RENDERIZADO VISUAL ---
 function renderApp() {
-    renderSettings();
-    renderRutas();
-    renderProductos();
+    try { renderSettings(); } catch(e) { console.error("Error en renderSettings:", e); }
+    try { renderRutas(); } catch(e) { console.error("Error en renderRutas:", e); }
+    try { renderProductos(); } catch(e) { console.error("Error en renderProductos:", e); }
 
     if (isEditorMode) {
         document.body.classList.add('editor-active');
-        enableTitleEditing(true);
+        try { enableTitleEditing(true); } catch(e) {}
     } else {
         document.body.classList.remove('editor-active');
-        enableTitleEditing(false);
+        try { enableTitleEditing(false); } catch(e) {}
     }
 }
 
@@ -210,13 +210,12 @@ function renderRutas() {
 
         const div = document.createElement('div');
         div.className = `route-card ${!ruta.visible ? 'hidden-item' : ''}`;
-        div.setAttribute('data-id', ruta.id);
 
         let editorHtml = '';
         if (isEditorMode) {
             editorHtml = `
                 <div class="editor-controls absolute-top-right z-max">
-                    <button class="drag-handle" onclick="event.preventDefault();"><ion-icon name="menu"></ion-icon></button>
+                    <button class="drag-handle" onclick="event.preventDefault();" style="cursor: grab;"><ion-icon name="menu"></ion-icon></button>
                     <button onclick="toggleVisibility('rutas', '${ruta.id}')"><ion-icon name="${ruta.visible ? 'eye-off' : 'eye'}"></ion-icon></button>
                     <button onclick="editItem('rutas', '${ruta.id}')"><ion-icon name="create"></ion-icon></button>
                     <button onclick="deleteItem('rutas', '${ruta.id}')" class="danger"><ion-icon name="trash"></ion-icon></button>
@@ -273,8 +272,9 @@ function renderRutas() {
     container.appendChild(fragment);
     initLeafletMaps();
 
+    // Iniciar SortableJS para Rutas
     if (sortableRutas) sortableRutas.destroy();
-    if (isEditorMode) {
+    if (isEditorMode && typeof Sortable !== 'undefined') {
         sortableRutas = Sortable.create(container, {
             handle: '.drag-handle',
             animation: 150,
@@ -300,13 +300,12 @@ function renderProductos() {
 
         const div = document.createElement('div');
         div.className = `product-card ${!prod.visible ? 'hidden-item' : ''}`;
-        div.setAttribute('data-id', prod.id);
 
         let editorHtml = '';
         if (isEditorMode) {
             editorHtml = `
                 <div class="editor-controls absolute-top-right z-max">
-                    <button class="drag-handle" onclick="event.preventDefault();"><ion-icon name="menu"></ion-icon></button>
+                    <button class="drag-handle" onclick="event.preventDefault();" style="cursor: grab;"><ion-icon name="menu"></ion-icon></button>
                     <button onclick="toggleVisibility('productos', '${prod.id}')"><ion-icon name="${prod.visible ? 'eye-off' : 'eye'}"></ion-icon></button>
                     <button onclick="editItem('productos', '${prod.id}')"><ion-icon name="create"></ion-icon></button>
                     <button onclick="deleteItem('productos', '${prod.id}')" class="danger"><ion-icon name="trash"></ion-icon></button>
@@ -340,7 +339,7 @@ function renderProductos() {
                 <p class="text-muted">${prod.desc}</p>
             </div>
         `;
-        fragment.appendChild(div);
+        container.appendChild(div);
     });
 
     if (isEditorMode) {
@@ -359,8 +358,9 @@ function renderProductos() {
 
     container.appendChild(fragment);
 
+    // Iniciar SortableJS para Productos
     if (sortableProductos) sortableProductos.destroy();
-    if (isEditorMode) {
+    if (isEditorMode && typeof Sortable !== 'undefined') {
         sortableProductos = Sortable.create(container, {
             handle: '.drag-handle',
             animation: 150,
@@ -398,42 +398,47 @@ window.nextImg = function (prodId, step, event) {
 }
 
 // --- MAPAS LEAFLET ---
+window.leafletMaps = window.leafletMaps || [];
+
 function initLeafletMaps() {
+    // Destruir mapas antiguos para evitar el error "Map container is already initialized"
+    if (window.leafletMaps && window.leafletMaps.length > 0) {
+        window.leafletMaps.forEach(map => {
+            try { map.remove(); } catch(e) {}
+        });
+    }
+    window.leafletMaps = [];
+
     const maps = document.querySelectorAll('.route-map');
     maps.forEach((mapEl) => {
         const gpxFile = mapEl.getAttribute('data-gpx');
         const mapId = mapEl.id;
 
-        if (mapEl._leaflet_id) {
-            mapEl.innerHTML = `
-                <div class="route-overlay" id="overlay-${mapId.replace('map-', '')}">
-                    <ion-icon name="map"></ion-icon>
-                    <span id="text-${mapId.replace('map-', '')}">Cargando trazado GPX...</span>
-                </div>
-            `;
-            let container = L.DomUtil.get(mapEl);
-            if (container != null) container._leaflet_id = null;
-        }
-
         if (gpxFile && mapId) {
-            const map = L.map(mapId, {
-                zoomControl: false, scrollWheelZoom: false, dragging: false, attributionControl: false
-            });
+            try {
+                const map = L.map(mapId, {
+                    zoomControl: false, scrollWheelZoom: false, dragging: false, attributionControl: false
+                });
 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-            new L.GPX(gpxFile, {
-                async: true,
-                marker_options: { startIconUrl: '', endIconUrl: '', shadowUrl: '' },
-                polyline_options: { color: '#a6511f', opacity: 0.8, weight: 4, lineCap: 'round' }
-            }).on('loaded', function (e) {
-                map.fitBounds(e.target.getBounds());
-                const overlay = mapEl.querySelector('.route-overlay');
-                if (overlay) overlay.style.display = 'none';
-            }).on('error', function (e) {
-                const textEl = mapEl.querySelector('span');
-                if (textEl) textEl.textContent = "Sin GPX (o error de carga local)";
-            }).addTo(map);
+                new L.GPX(gpxFile, {
+                    async: true,
+                    marker_options: { startIconUrl: '', endIconUrl: '', shadowUrl: '' },
+                    polyline_options: { color: '#a6511f', opacity: 0.8, weight: 4, lineCap: 'round' }
+                }).on('loaded', function (e) {
+                    map.fitBounds(e.target.getBounds());
+                    const overlay = mapEl.querySelector('.route-overlay');
+                    if (overlay) overlay.style.display = 'none';
+                }).on('error', function (e) {
+                    const textEl = mapEl.querySelector('span');
+                    if (textEl) textEl.textContent = "Sin GPX (o error de carga local)";
+                }).addTo(map);
+
+                window.leafletMaps.push(map);
+            } catch(e) {
+                console.warn("Leaflet error:", e);
+            }
         }
     });
 }
