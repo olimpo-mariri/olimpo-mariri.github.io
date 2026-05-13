@@ -456,6 +456,14 @@ a:hover {
   color: #dc3545;
 }
 
+.drag-handle {
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
 .absolute-top-right {
   top: 10px;
   right: 10px;

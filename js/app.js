@@ -56,6 +56,8 @@ let appData = {
 
 let isEditorMode = false;
 let hasUnsavedChanges = false;
+let sortableRutas = null;
+let sortableProductos = null;
 const JSONBIN_URL = "https://api.jsonbin.io/v3/b/6a03a756250b1311c33f74c6";
 let SECRET_KEY = localStorage.getItem('olimpo_api_key') || "";
 
@@ -208,11 +210,13 @@ function renderRutas() {
 
         const div = document.createElement('div');
         div.className = `route-card ${!ruta.visible ? 'hidden-item' : ''}`;
+        div.setAttribute('data-id', ruta.id);
 
         let editorHtml = '';
         if (isEditorMode) {
             editorHtml = `
                 <div class="editor-controls absolute-top-right z-max">
+                    <button class="drag-handle" onclick="event.preventDefault();"><ion-icon name="menu"></ion-icon></button>
                     <button onclick="toggleVisibility('rutas', '${ruta.id}')"><ion-icon name="${ruta.visible ? 'eye-off' : 'eye'}"></ion-icon></button>
                     <button onclick="editItem('rutas', '${ruta.id}')"><ion-icon name="create"></ion-icon></button>
                     <button onclick="deleteItem('rutas', '${ruta.id}')" class="danger"><ion-icon name="trash"></ion-icon></button>
@@ -268,6 +272,21 @@ function renderRutas() {
 
     container.appendChild(fragment);
     initLeafletMaps();
+
+    if (sortableRutas) sortableRutas.destroy();
+    if (isEditorMode) {
+        sortableRutas = Sortable.create(container, {
+            handle: '.drag-handle',
+            animation: 150,
+            draggable: '.route-card:not(.add-new-btn-card)',
+            onEnd: function (evt) {
+                const order = sortableRutas.toArray().filter(id => id);
+                appData.rutas.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+                hasUnsavedChanges = true;
+                renderApp();
+            }
+        });
+    }
 }
 
 function renderProductos() {
@@ -281,11 +300,13 @@ function renderProductos() {
 
         const div = document.createElement('div');
         div.className = `product-card ${!prod.visible ? 'hidden-item' : ''}`;
+        div.setAttribute('data-id', prod.id);
 
         let editorHtml = '';
         if (isEditorMode) {
             editorHtml = `
                 <div class="editor-controls absolute-top-right z-max">
+                    <button class="drag-handle" onclick="event.preventDefault();"><ion-icon name="menu"></ion-icon></button>
                     <button onclick="toggleVisibility('productos', '${prod.id}')"><ion-icon name="${prod.visible ? 'eye-off' : 'eye'}"></ion-icon></button>
                     <button onclick="editItem('productos', '${prod.id}')"><ion-icon name="create"></ion-icon></button>
                     <button onclick="deleteItem('productos', '${prod.id}')" class="danger"><ion-icon name="trash"></ion-icon></button>
@@ -319,7 +340,7 @@ function renderProductos() {
                 <p class="text-muted">${prod.desc}</p>
             </div>
         `;
-        container.appendChild(div);
+        fragment.appendChild(div);
     });
 
     if (isEditorMode) {
@@ -337,6 +358,21 @@ function renderProductos() {
     }
 
     container.appendChild(fragment);
+
+    if (sortableProductos) sortableProductos.destroy();
+    if (isEditorMode) {
+        sortableProductos = Sortable.create(container, {
+            handle: '.drag-handle',
+            animation: 150,
+            draggable: '.product-card:not(.add-new-btn-card)',
+            onEnd: function (evt) {
+                const order = sortableProductos.toArray().filter(id => id);
+                appData.productos.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+                hasUnsavedChanges = true;
+                renderApp();
+            }
+        });
+    }
 }
 
 // --- LOGICA DEL CARRUSEL ---
