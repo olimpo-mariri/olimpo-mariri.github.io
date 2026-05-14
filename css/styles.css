@@ -38,12 +38,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-serif);
   color: var(--c-navy);
   font-weight: 600;
@@ -64,21 +59,26 @@ a:hover {
   color: var(--c-text-muted);
 }
 
-/* Base Layout */
+/* =========================================
+   BASE LAYOUT
+   ========================================= */
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 var(--space-sm);
 }
 
-/* Header */
+/* =========================================
+   HEADER — z-index altísimo para que siempre
+   esté por encima de cualquier tarjeta
+   ========================================= */
 .header {
   background-color: var(--c-surface);
   border-bottom: 1px solid rgba(17, 44, 90, 0.1);
   padding: var(--space-sm) 0;
   position: sticky;
   top: 0;
-  z-index: 9999;
+  z-index: 1000;
 }
 
 .nav {
@@ -117,7 +117,9 @@ a:hover {
   color: var(--c-orange);
 }
 
-/* Utility Classes */
+/* =========================================
+   UTILITIES
+   ========================================= */
 .text-center {
   text-align: center;
 }
@@ -136,7 +138,9 @@ a:hover {
   font-style: italic;
 }
 
-/* Buttons */
+/* =========================================
+   BUTTONS
+   ========================================= */
 .btn {
   display: inline-block;
   padding: 0.75rem 1.75rem;
@@ -160,7 +164,9 @@ a:hover {
   transform: translateY(-2px);
 }
 
-/* Hero Section */
+/* =========================================
+   HERO SECTION
+   ========================================= */
 .hero {
   min-height: 80vh;
   display: flex;
@@ -184,21 +190,28 @@ a:hover {
   margin-top: var(--space-md);
 }
 
+/* =========================================
+   RUTAS SECTION
+   ========================================= */
+
 /* Ocultar pines y sombras del mapa Leaflet-GPX */
 .route-map .leaflet-marker-icon,
 .route-map .leaflet-marker-shadow {
   display: none !important;
 }
 
-/* Rutas Section */
+/* La tarjeta de ruta tiene position:relative para que los botones
+   de edición se posicionen dentro de ella.
+   NO tiene overflow:hidden para no crear un stacking context que
+   haga que los botones aparezcan por encima del header. */
 .route-card {
   display: flex;
   background: var(--c-surface);
   border-radius: 12px;
-  overflow: hidden;
   box-shadow: 0 10px 40px rgba(17, 44, 90, 0.08);
   margin-top: var(--space-md);
   flex-direction: column;
+  position: relative;
 }
 
 @media (min-width: 900px) {
@@ -214,6 +227,14 @@ a:hover {
   background-size: cover;
   background-position: center;
   min-height: 250px;
+  border-radius: 12px 12px 0 0;
+  overflow: hidden; /* overflow:hidden solo en el mapa, no en la tarjeta */
+}
+
+@media (min-width: 900px) {
+  .route-map {
+    border-radius: 12px 0 0 12px;
+  }
 }
 
 .route-overlay {
@@ -303,7 +324,9 @@ a:hover {
   padding-left: 1rem;
 }
 
-/* Productos Section */
+/* =========================================
+   PRODUCTOS SECTION
+   ========================================= */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -311,18 +334,20 @@ a:hover {
   margin-top: var(--space-md);
 }
 
+/* Igual que route-card: position:relative pero sin overflow:hidden */
 .product-card {
   background: var(--c-surface);
   border-radius: 8px;
-  overflow: hidden;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease;
+  transition: box-shadow 0.3s ease;
+  position: relative;
 }
 
 .product-card:hover {
-  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
+/* overflow:hidden solo en la imagen, no en la tarjeta */
 .product-img {
   height: 250px;
   background-size: cover;
@@ -331,6 +356,8 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
 }
 
 .product-badge {
@@ -378,7 +405,9 @@ a:hover {
   margin-bottom: 0.5rem;
 }
 
-/* Footer */
+/* =========================================
+   FOOTER
+   ========================================= */
 .footer {
   background-color: var(--c-navy);
   color: var(--c-bg);
@@ -394,7 +423,6 @@ a:hover {
    EDITOR STYLES
    ========================================= */
 
-/* Switch Toggle en Cabecera */
 .editor-icon-btn {
   background: none;
   border: none;
@@ -417,14 +445,15 @@ a:hover {
   color: var(--c-orange);
 }
 
-/* Controles Flotantes del Editor */
+/* Los botones de edición se posicionan sobre la tarjeta (position:relative).
+   z-index: 2 — por debajo del header (1000) pero por encima del contenido normal. */
 .editor-controls {
   position: absolute;
   top: 10px;
   right: 10px;
   display: none;
   gap: 5px;
-  z-index: 10;
+  z-index: 2;
 }
 
 .editor-active .editor-controls {
@@ -456,43 +485,21 @@ a:hover {
   color: #dc3545;
 }
 
-.absolute-top-right {
-  top: 10px;
-  right: 10px;
+.drag-handle {
+  cursor: grab;
 }
 
-.z-max {
-  z-index: 9999 !important;
+.drag-handle:active {
+  cursor: grabbing;
 }
 
-/* Elementos Ocultos y Añadir */
+/* Elementos ocultos en modo editor */
 .hidden-item {
   opacity: 0.5;
   filter: grayscale(50%);
 }
 
-.add-new-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: rgba(17, 44, 90, 0.05) !important;
-  border: 2px dashed var(--c-navy);
-  color: var(--c-navy);
-  cursor: pointer;
-  min-height: 250px;
-}
-
-.add-new-btn:hover {
-  background: rgba(17, 44, 90, 0.1) !important;
-}
-
-.add-new-btn ion-icon {
-  font-size: 3rem;
-  margin-bottom: 10px;
-  color: var(--c-orange);
-}
-
+/* Botones de añadir nuevo */
 .add-new-btn-card {
   border: 2px dashed var(--c-navy);
   background: rgba(17, 44, 90, 0.02);
@@ -501,13 +508,16 @@ a:hover {
   justify-content: center;
   min-height: 250px;
   cursor: pointer;
+  border-radius: 12px;
 }
 
 .add-new-btn-card:hover {
   background: rgba(17, 44, 90, 0.05);
 }
 
-/* Modal */
+/* =========================================
+   MODAL
+   ========================================= */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -515,7 +525,7 @@ a:hover {
   width: 100%;
   height: 100%;
   background: rgba(11, 29, 59, 0.8);
-  z-index: 999999;
+  z-index: 9999;
   display: none;
   align-items: center;
   justify-content: center;
@@ -540,15 +550,8 @@ a:hover {
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(50px);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(50px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 .modal-header {
@@ -580,7 +583,9 @@ a:hover {
   gap: 10px;
 }
 
-/* Carrusel de Imágenes */
+/* =========================================
+   CARRUSEL DE IMÁGENES
+   ========================================= */
 .carousel-img {
   width: 100%;
   height: 100%;
@@ -611,13 +616,8 @@ a:hover {
   color: var(--c-orange);
 }
 
-.carousel-btn.prev {
-  left: 10px;
-}
-
-.carousel-btn.next {
-  right: 10px;
-}
+.carousel-btn.prev { left: 10px; }
+.carousel-btn.next { right: 10px; }
 
 .carousel-dots {
   position: absolute;
@@ -645,18 +645,16 @@ a:hover {
    ========================================= */
 @media (max-width: 768px) {
   :root {
-    /* Reducir espacios enormes en móviles */
     --space-lg: 2rem;
     --space-xl: 3rem;
   }
 
-  /* Cabecera apilada y flexible */
   .nav {
     flex-direction: column;
     gap: 1rem;
     padding: 0.5rem 0;
   }
-  
+
   .nav-links {
     flex-wrap: wrap;
     justify-content: center;
@@ -675,31 +673,28 @@ a:hover {
     gap: 0;
   }
 
-  /* Intercambiar logos */
   .mobile-logo {
     display: block !important;
   }
-  
+
   .desktop-logo {
     display: none !important;
   }
 
-  /* Evitar desbordamiento en modales */
   .modal-content {
     width: 95%;
   }
+
   .modal-body {
     padding: 1rem;
   }
 
-  /* Cartel de próximamente ajustado */
   .product-img.is-upcoming .product-badge.upcoming {
     font-size: 1.1rem;
     padding: 10px 15px;
     width: 90%;
   }
-  
-  /* Ajuste visual en rutas */
+
   .route-map {
     min-height: 200px;
   }

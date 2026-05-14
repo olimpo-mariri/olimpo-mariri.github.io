@@ -210,12 +210,13 @@ function renderRutas() {
 
         const div = document.createElement('div');
         div.className = `route-card ${!ruta.visible ? 'hidden-item' : ''}`;
+        div.setAttribute('data-id', ruta.id);
 
         let editorHtml = '';
         if (isEditorMode) {
             editorHtml = `
-                <div class="editor-controls absolute-top-right z-max">
-                    <button class="drag-handle" onclick="event.preventDefault();" style="cursor: grab;"><ion-icon name="menu"></ion-icon></button>
+                <div class="editor-controls absolute-top-right">
+                    <button class="drag-handle" onclick="event.preventDefault();"><ion-icon name="menu"></ion-icon></button>
                     <button onclick="toggleVisibility('rutas', '${ruta.id}')"><ion-icon name="${ruta.visible ? 'eye-off' : 'eye'}"></ion-icon></button>
                     <button onclick="editItem('rutas', '${ruta.id}')"><ion-icon name="create"></ion-icon></button>
                     <button onclick="deleteItem('rutas', '${ruta.id}')" class="danger"><ion-icon name="trash"></ion-icon></button>
@@ -244,8 +245,8 @@ function renderRutas() {
                     <ion-icon name="map"></ion-icon>
                     <span id="text-${ruta.id}">Cargando trazado GPX...</span>
                 </div>
-                ${editorHtml}
             </div>
+            ${editorHtml}
             <div class="route-info">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 class="route-title" style="margin-bottom: 0;">${ruta.title}</h3>
@@ -272,9 +273,8 @@ function renderRutas() {
     container.appendChild(fragment);
     initLeafletMaps();
 
-    // Iniciar SortableJS para Rutas
     if (sortableRutas) sortableRutas.destroy();
-    if (isEditorMode && typeof Sortable !== 'undefined') {
+    if (isEditorMode) {
         sortableRutas = Sortable.create(container, {
             handle: '.drag-handle',
             animation: 150,
@@ -300,12 +300,13 @@ function renderProductos() {
 
         const div = document.createElement('div');
         div.className = `product-card ${!prod.visible ? 'hidden-item' : ''}`;
+        div.setAttribute('data-id', prod.id);
 
         let editorHtml = '';
         if (isEditorMode) {
             editorHtml = `
-                <div class="editor-controls absolute-top-right z-max">
-                    <button class="drag-handle" onclick="event.preventDefault();" style="cursor: grab;"><ion-icon name="menu"></ion-icon></button>
+                <div class="editor-controls absolute-top-right">
+                    <button class="drag-handle" onclick="event.preventDefault();"><ion-icon name="menu"></ion-icon></button>
                     <button onclick="toggleVisibility('productos', '${prod.id}')"><ion-icon name="${prod.visible ? 'eye-off' : 'eye'}"></ion-icon></button>
                     <button onclick="editItem('productos', '${prod.id}')"><ion-icon name="create"></ion-icon></button>
                     <button onclick="deleteItem('productos', '${prod.id}')" class="danger"><ion-icon name="trash"></ion-icon></button>
@@ -332,14 +333,14 @@ function renderProductos() {
             <div class="product-img ${prod.status === 'upcoming' ? 'is-upcoming' : ''}">
                 ${imgHtml}
                 ${prod.status === 'upcoming' ? '<span class="product-badge upcoming">Próximamente</span>' : ''}
-                ${editorHtml}
             </div>
             <div class="product-details">
                 <h4>${prod.name}</h4>
                 <p class="text-muted">${prod.desc}</p>
             </div>
+            ${editorHtml}
         `;
-        container.appendChild(div);
+        fragment.appendChild(div);
     });
 
     if (isEditorMode) {
@@ -358,9 +359,8 @@ function renderProductos() {
 
     container.appendChild(fragment);
 
-    // Iniciar SortableJS para Productos
     if (sortableProductos) sortableProductos.destroy();
-    if (isEditorMode && typeof Sortable !== 'undefined') {
+    if (isEditorMode) {
         sortableProductos = Sortable.create(container, {
             handle: '.drag-handle',
             animation: 150,
@@ -671,9 +671,9 @@ window.saveModal = function () {
 window.addEventListener('scroll', () => {
     const header = document.querySelector('.header');
     if (!header) return;
-    
+
     // Solo aplicar en móviles y si hemos bajado más de 200px
-    if (window.innerWidth <= 768 && window.scrollY > 200) {
+    if (window.innerWidth <= 768 && window.scrollY > 100) {
         header.classList.add('hide-links');
     } else {
         header.classList.remove('hide-links');
