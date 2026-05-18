@@ -273,7 +273,7 @@ function renderRutas() {
     container.appendChild(fragment);
     initLeafletMaps();
 
-    if (sortableRutas) sortableRutas.destroy();
+    if (sortableRutas) { sortableRutas.destroy(); sortableRutas = null; }
     if (isEditorMode) {
         sortableRutas = Sortable.create(container, {
             handle: '.drag-handle',
@@ -359,7 +359,7 @@ function renderProductos() {
 
     container.appendChild(fragment);
 
-    if (sortableProductos) sortableProductos.destroy();
+    if (sortableProductos) { sortableProductos.destroy(); sortableProductos = null; }
     if (isEditorMode) {
         sortableProductos = Sortable.create(container, {
             handle: '.drag-handle',
