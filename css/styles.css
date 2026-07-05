@@ -195,8 +195,8 @@ a:hover {
    ========================================= */
 
 /* Ocultar pines y sombras del mapa Leaflet-GPX */
-.route-map .leaflet-marker-icon,
-.route-map .leaflet-marker-shadow {
+.route-media .leaflet-marker-icon,
+.route-media .leaflet-marker-shadow {
   display: none !important;
 }
 
@@ -221,18 +221,26 @@ a:hover {
   }
 }
 
-.route-map {
+.route-media {
   flex: 1.2;
   position: relative;
   background-size: cover;
   background-position: center;
   min-height: 250px;
   border-radius: 12px 12px 0 0;
-  overflow: hidden; /* overflow:hidden solo en el mapa, no en la tarjeta */
+  overflow: hidden; /* overflow:hidden para mapas e imágenes */
+}
+
+.route-map-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 @media (min-width: 900px) {
-  .route-map {
+  .route-media {
     border-radius: 12px 0 0 12px;
   }
 }
@@ -322,6 +330,27 @@ a:hover {
   color: var(--c-text-muted);
   border-left: 3px solid var(--c-orange);
   padding-left: 1rem;
+}
+
+/* =========================================
+   MAPAMUNDI SECTION
+   ========================================= */
+#mapamundi {
+  background-color: var(--c-bg);
+}
+
+#world-map {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Tooltip custom de jsVectorMap */
+.jvm-tooltip {
+  background-color: var(--c-navy);
+  color: white;
+  font-family: var(--font-sans);
+  border-radius: 4px;
+  padding: 5px 10px;
 }
 
 /* =========================================
@@ -607,7 +636,7 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2;
+  z-index: 500;
   transition: all 0.2s;
 }
 
@@ -626,7 +655,7 @@ a:hover {
   display: flex;
   justify-content: center;
   gap: 5px;
-  z-index: 2;
+  z-index: 500;
 }
 
 .carousel-dots .dot {
@@ -695,7 +724,7 @@ a:hover {
     width: 90%;
   }
 
-  .route-map {
+  .route-media {
     min-height: 200px;
   }
 }

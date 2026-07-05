@@ -4,10 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>olIMpo | La Grandeza de los Dioses</title>
-    <meta name="description" content="olIMpo: Branding personal, rutas de montaña, diseño y estilo de vida premium.">
+    <title>olIMpo</title>
+    <meta name="description" content="olIMpo: Marca de una pareja siempre en busca de la perfección.">
     <!-- Leaflet CSS para Mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- jsVectorMap para Mapamundi -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css" />
     <link rel="stylesheet" href="css/styles.css">
     <!-- Favicon -->
     <link rel="icon" href="img/favicon.png" type="image/png">
@@ -32,8 +34,9 @@
                     onerror="this.style.display='none'">
             </a>
             <ul class="nav-links">
-                <li><a href="#rutas">Actividades</a></li>
-                <li><a href="#productos">Productos</a></li>
+                <li><a href="#rutas" id="nav-rutas"> </a></li>
+                <li><a href="#mapamundi" id="nav-mapamundi"> </a></li>
+                <li><a href="#productos" id="nav-productos"> </a></li>
                 <li id="cloud-save-container" style="display:none;">
                     <button class="btn btn-primary" onclick="saveToCloud()"
                         style="padding: 0.5rem 1rem; font-size: 0.8rem;">☁ Guardar</button>
@@ -66,7 +69,7 @@
     <!-- Sección Actividades -->
     <section id="rutas" class="section" style="background-color: var(--c-surface);">
         <div class="container" style="position: relative;">
-            <div id="rutas-editor-container"></div>
+
             <h2 class="section-title text-center" id="rutas-title"> </h2>
             <p class="text-center text-muted" id="rutas-subtitle" style="margin-bottom: var(--space-lg);"> </p>
 
@@ -76,10 +79,21 @@
         </div>
     </section>
 
-    <!-- Sección Productos -->
-    <section id="productos" class="section">
+    <!-- Sección Mapamundi -->
+    <section id="mapamundi" class="section">
         <div class="container" style="position: relative;">
-            <div id="productos-editor-container"></div>
+
+            <h2 class="section-title text-center" id="mapamundi-title"> </h2>
+            <p class="text-center text-muted" id="mapamundi-subtitle" style="margin-bottom: var(--space-lg);"> </p>
+
+            <div id="world-map" style="width: 100%; height: 500px; max-height: 60vh;"></div>
+        </div>
+    </section>
+
+    <!-- Sección Productos -->
+    <section id="productos" class="section" style="background-color: var(--c-surface);">
+        <div class="container" style="position: relative;">
+
             <h2 class="section-title text-center" id="productos-title"> </h2>
             <p class="text-center text-muted" id="productos-subtitle" style="margin-bottom: var(--space-lg);"> </p>
 
@@ -100,6 +114,10 @@
     <!-- Scripts de Mapas (Leaflet + GPX) -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/2.1.2/gpx.min.js"></script>
+
+    <!-- Scripts de jsVectorMap -->
+    <script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world.js"></script>
 
     <!-- Modal Global del Editor -->
     <div id="editor-modal" class="modal-overlay">

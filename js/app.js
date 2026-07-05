@@ -6,9 +6,12 @@ let appData = {
         heroBg: "https://i.imgur.com/DVZpbuJ.png",
         rutasTitle: "Actividades",
         rutasSubtitle: "Cada paso nos forja.",
+        mapamundiTitle: "olIMpo se va de viaje",
+        mapamundiSubtitle: "\"and the goal is to one day travel the world beside my world\"",
         productosTitle: "Productos",
         productosSubtitle: "Creaciones únicas que definen nuestro estilo de vida."
     },
+    visitedCountries: [],
     rutas: [
         {
             id: "rut-1",
@@ -73,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loadFromCloud() {
     if (JSONBIN_URL.includes("AQUI_TU_BIN_ID")) return;
     try {
-        const response = await fetch(`${JSONBIN_URL}/latest`);
+        const response = await fetch(`${JSONBIN_URL}/latest`, { cache: 'no-store' });
         if (response.ok) {
             const data = await response.json();
             if (data.record && data.record.rutas) {
@@ -121,37 +124,41 @@ window.saveToCloud = async function () {
 
 // --- RENDERIZADO VISUAL ---
 function renderApp() {
-    try { renderSettings(); } catch(e) { console.error("Error en renderSettings:", e); }
-    try { renderRutas(); } catch(e) { console.error("Error en renderRutas:", e); }
-    try { renderProductos(); } catch(e) { console.error("Error en renderProductos:", e); }
+    try { renderSettings(); } catch (e) { console.error("Error en renderSettings:", e); }
+    try { renderMapamundi(); } catch (e) { console.error("Error en renderMapamundi:", e); }
+    try { renderRutas(); } catch (e) { console.error("Error en renderRutas:", e); }
+    try { renderProductos(); } catch (e) { console.error("Error en renderProductos:", e); }
 
     if (isEditorMode) {
         document.body.classList.add('editor-active');
-        try { enableTitleEditing(true); } catch(e) {}
+        try { enableTitleEditing(true); } catch (e) { }
     } else {
         document.body.classList.remove('editor-active');
-        try { enableTitleEditing(false); } catch(e) {}
+        try { enableTitleEditing(false); } catch (e) { }
     }
 }
 
 function renderSettings() {
-    if (!appData.settings) return; // Por compatibilidad si hay datos viejos en la nube
-
-    document.getElementById('hero-title').textContent = appData.settings.heroTitle || "Título Cabecera";
-    document.getElementById('hero-subtitle').textContent = appData.settings.heroSubtitle || "Subtítulo Cabecera";
-
+    if (!appData.settings) return;
     const heroSec = document.getElementById('hero-section');
-    heroSec.style.backgroundImage = `linear-gradient(rgba(248, 249, 250, 0.8), rgba(248, 249, 250, 0.8)), url('${appData.settings.heroBg}')`;
+    document.getElementById('hero-title').innerHTML = appData.settings.heroTitle || "Bienvenido al club de deportes más querido";
+    document.getElementById('hero-subtitle').innerHTML = appData.settings.heroSubtitle || "Fruto de un amor por sí mismos y por nuestro compañero de vida.";
+    if (appData.settings.heroBg) {
+        heroSec.style.backgroundImage = `linear-gradient(rgba(248, 249, 250, 0.8), rgba(248, 249, 250, 0.8)), url('${appData.settings.heroBg}')`;
+    }
     heroSec.style.backgroundPosition = 'center';
     heroSec.style.backgroundSize = 'cover';
 
-    document.getElementById('rutas-title').textContent = appData.settings.rutasTitle || "Nuestros Caminos";
-    document.getElementById('rutas-subtitle').textContent = appData.settings.rutasSubtitle || "Cada paso nos forja.";
+    document.getElementById('rutas-title').innerHTML = appData.settings.rutasTitle || "Actividades";
+    document.getElementById('rutas-subtitle').innerHTML = appData.settings.rutasSubtitle || "Cada paso nos forja.";
+    const navRutas = document.getElementById('nav-rutas');
+    if (navRutas) navRutas.textContent = document.getElementById('rutas-title').textContent;
 
-    document.getElementById('productos-title').textContent = appData.settings.productosTitle || "La Marca";
-    document.getElementById('productos-subtitle').textContent = appData.settings.productosSubtitle || "Creaciones únicas...";
+    document.getElementById('productos-title').innerHTML = appData.settings.productosTitle || "Productos";
+    document.getElementById('productos-subtitle').innerHTML = appData.settings.productosSubtitle || "Creaciones únicas que definen nuestro estilo de vida.";
+    const navProductos = document.getElementById('nav-productos');
+    if (navProductos) navProductos.textContent = document.getElementById('productos-title').textContent;
 
-    // Botones de edición de fondo y settings (Solo aparecen en editor mode)
     const heroEditor = document.getElementById('hero-editor-container');
     if (heroEditor) {
         if (isEditorMode) {
@@ -163,13 +170,30 @@ function renderSettings() {
 }
 
 function enableTitleEditing(enable) {
-    const ids = ['hero-title', 'hero-subtitle', 'rutas-title', 'rutas-subtitle', 'productos-title', 'productos-subtitle'];
+    const ids = ['hero-title', 'hero-subtitle', 'rutas-title', 'rutas-subtitle', 'productos-title', 'productos-subtitle', 'mapamundi-title', 'mapamundi-subtitle'];
     ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.contentEditable = enable;
-            el.style.border = enable ? '1px dashed #ccc' : 'none';
-            el.style.padding = enable ? '5px' : '0';
+            if (enable) {
+                el.style.border = "2px dashed var(--c-navy)";
+                el.style.padding = "5px";
+                el.style.borderRadius = "4px";
+
+                el.addEventListener('paste', function (e) {
+                    e.preventDefault();
+                    const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+                    document.execCommand('insertText', false, text);
+                });
+            } else {
+                el.style.border = "none";
+                el.style.padding = "0";
+
+                const newEl = el.cloneNode(true);
+                el.parentNode.replaceChild(newEl, el);
+
+                setupEditableTitles();
+            }
         }
     });
 }
@@ -181,16 +205,36 @@ function setupEditableTitles() {
         { id: 'rutas-title', key: 'rutasTitle' },
         { id: 'rutas-subtitle', key: 'rutasSubtitle' },
         { id: 'productos-title', key: 'productosTitle' },
-        { id: 'productos-subtitle', key: 'productosSubtitle' }
+        { id: 'productos-subtitle', key: 'productosSubtitle' },
+        { id: 'mapamundi-title', key: 'mapamundiTitle' },
+        { id: 'mapamundi-subtitle', key: 'mapamundiSubtitle' }
     ];
     ids.forEach(obj => {
         const el = document.getElementById(obj.id);
         if (el) {
+            let initialHtml = '';
+            el.addEventListener('focus', (e) => {
+                initialHtml = e.target.innerHTML;
+            });
+
             el.addEventListener('blur', (e) => {
                 if (isEditorMode && appData.settings) {
-                    if (appData.settings[obj.key] !== e.target.textContent) {
-                        appData.settings[obj.key] = e.target.textContent;
+                    if (initialHtml !== e.target.innerHTML) {
+                        appData.settings[obj.key] = e.target.innerHTML;
                         hasUnsavedChanges = true;
+
+                        if (obj.key === 'rutasTitle') {
+                            const navEl = document.getElementById('nav-rutas');
+                            if (navEl) navEl.textContent = e.target.textContent;
+                        }
+                        if (obj.key === 'productosTitle') {
+                            const navEl = document.getElementById('nav-productos');
+                            if (navEl) navEl.textContent = e.target.textContent;
+                        }
+                        if (obj.key === 'mapamundiTitle') {
+                            const navEl = document.getElementById('nav-mapamundi');
+                            if (navEl) navEl.textContent = e.target.textContent;
+                        }
                     }
                 }
             });
@@ -239,12 +283,33 @@ function renderRutas() {
             });
         }
 
-        div.innerHTML = `
-            <div id="map-${ruta.id}" class="route-map" data-gpx="${ruta.gpx}">
-                <div class="route-overlay" id="overlay-${ruta.id}">
-                    <ion-icon name="map"></ion-icon>
-                    <span id="text-${ruta.id}">Cargando trazado GPX...</span>
+        const images = ruta.images || [];
+        const hasMultiple = images.length > 0;
+
+        let carouselUI = '';
+        if (hasMultiple) {
+            carouselUI = `
+                <button class="carousel-btn prev" onclick="nextImg('rutas', '${ruta.id}', -1, event)">&#10094;</button>
+                <button class="carousel-btn next" onclick="nextImg('rutas', '${ruta.id}', 1, event)">&#10095;</button>
+                <div class="carousel-dots">
+                    <span class="dot active" id="dot-rutas-${ruta.id}-0"></span>
+                    ${images.map((_, i) => `<span class="dot" id="dot-rutas-${ruta.id}-${i + 1}"></span>`).join('')}
                 </div>
+            `;
+        }
+
+        const imgsHtml = images.map((img, i) => `<img src="${img}" class="carousel-img" id="img-rutas-${ruta.id}-${i + 1}" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; z-index:2; object-fit:cover;">`).join('');
+
+        div.innerHTML = `
+            <div class="route-media" id="media-rutas-${ruta.id}" data-idx="0" data-total="${images.length + 1}">
+                <div id="map-${ruta.id}" class="route-map-container" data-gpx="${ruta.gpx}">
+                    <div class="route-overlay" id="overlay-${ruta.id}">
+                        <ion-icon name="map"></ion-icon>
+                        <span id="text-${ruta.id}">Cargando trazado GPX...</span>
+                    </div>
+                </div>
+                ${imgsHtml}
+                ${carouselUI}
             </div>
             ${editorHtml}
             <div class="route-info">
@@ -266,7 +331,11 @@ function renderRutas() {
         const addBtn = document.createElement('div');
         addBtn.className = 'route-card add-new-btn-card';
         addBtn.onclick = () => openModal('rutas');
-        addBtn.innerHTML = `<ion-icon name="add-circle-outline"></ion-icon><span>Añadir Actividad</span>`;
+        addBtn.innerHTML = `
+            <div style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
+                <ion-icon name="add-circle-outline" style="font-size: 4rem; color: var(--c-navy);"></ion-icon>
+                <h3 style="margin-top: 0.5rem; font-size: 1.5rem; color: var(--c-navy);">Añadir Actividad</h3>
+            </div>`;
         fragment.appendChild(addBtn);
     }
 
@@ -320,8 +389,8 @@ function renderProductos() {
             imgHtml = `<img src="${prod.images[0]}" alt="${prod.name}" class="carousel-img" id="img-${prod.id}" data-idx="0">`;
             if (hasMultiple) {
                 imgHtml += `
-                    <button class="carousel-btn prev" onclick="nextImg('${prod.id}', -1, event)">&#10094;</button>
-                    <button class="carousel-btn next" onclick="nextImg('${prod.id}', 1, event)">&#10095;</button>
+                    <button class="carousel-btn prev" onclick="nextImg('productos', '${prod.id}', -1, event)">&#10094;</button>
+                    <button class="carousel-btn next" onclick="nextImg('productos', '${prod.id}', 1, event)">&#10095;</button>
                     <div class="carousel-dots">
                         ${prod.images.map((_, i) => `<span class="dot ${i === 0 ? 'active' : ''}" id="dot-${prod.id}-${i}"></span>`).join('')}
                     </div>
@@ -345,15 +414,13 @@ function renderProductos() {
 
     if (isEditorMode) {
         const addBtn = document.createElement('div');
-        addBtn.className = 'product-card add-new-btn-card text-center';
-        addBtn.style.display = 'flex';
-        addBtn.style.flexDirection = 'column';
-        addBtn.style.alignItems = 'center';
-        addBtn.style.justifyContent = 'center';
-        addBtn.style.minHeight = '350px';
-        addBtn.style.cursor = 'pointer';
+        addBtn.className = 'product-card add-new-btn-card';
         addBtn.onclick = () => openModal('productos');
-        addBtn.innerHTML = `<ion-icon name="add-circle-outline" style="font-size: 4rem; color: var(--c-orange);"></ion-icon><h4 style="margin-top: 1rem;">Añadir Producto</h4>`;
+        addBtn.innerHTML = `
+            <div style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
+                <ion-icon name="add-circle-outline" style="font-size: 4rem; color: var(--c-navy);"></ion-icon>
+                <h3 style="margin-top: 0.5rem; font-size: 1.5rem; color: var(--c-navy);">Añadir Producto</h3>
+            </div>`;
         fragment.appendChild(addBtn);
     }
 
@@ -376,25 +443,138 @@ function renderProductos() {
 }
 
 // --- LOGICA DEL CARRUSEL ---
-window.nextImg = function (prodId, step, event) {
+window.nextImg = function (type, itemId, step, event) {
     if (event) event.stopPropagation();
-    const prod = appData.productos.find(p => p.id === prodId);
-    if (!prod || prod.images.length <= 1) return;
 
-    const imgEl = document.getElementById(`img-${prodId}`);
-    let currentIdx = parseInt(imgEl.getAttribute('data-idx'));
-    let newIdx = currentIdx + step;
+    if (type === 'productos') {
+        const prod = appData.productos.find(p => p.id === itemId);
+        if (!prod || prod.images.length <= 1) return;
 
-    if (newIdx < 0) newIdx = prod.images.length - 1;
-    if (newIdx >= prod.images.length) newIdx = 0;
+        const imgEl = document.getElementById(`img-${itemId}`);
+        let currentIdx = parseInt(imgEl.getAttribute('data-idx'));
+        let newIdx = currentIdx + step;
 
-    imgEl.src = prod.images[newIdx];
-    imgEl.setAttribute('data-idx', newIdx);
+        if (newIdx < 0) newIdx = prod.images.length - 1;
+        if (newIdx >= prod.images.length) newIdx = 0;
 
-    prod.images.forEach((_, i) => {
-        document.getElementById(`dot-${prodId}-${i}`).classList.remove('active');
-    });
-    document.getElementById(`dot-${prodId}-${newIdx}`).classList.add('active');
+        imgEl.src = prod.images[newIdx];
+        imgEl.setAttribute('data-idx', newIdx);
+
+        prod.images.forEach((_, i) => {
+            document.getElementById(`dot-${itemId}-${i}`).classList.remove('active');
+        });
+        document.getElementById(`dot-${itemId}-${newIdx}`).classList.add('active');
+    } else if (type === 'rutas') {
+        const ruta = appData.rutas.find(r => r.id === itemId);
+        const images = ruta.images || [];
+        const total = images.length + 1; // map is 0
+        if (total <= 1) return;
+
+        const mediaEl = document.getElementById(`media-rutas-${itemId}`);
+        let currentIdx = parseInt(mediaEl.getAttribute('data-idx'));
+        let newIdx = currentIdx + step;
+
+        if (newIdx < 0) newIdx = total - 1;
+        if (newIdx >= total) newIdx = 0;
+
+        // Hide all
+        document.getElementById(`map-${itemId}`).style.opacity = '0';
+        document.getElementById(`map-${itemId}`).style.pointerEvents = 'none';
+        images.forEach((_, i) => {
+            const imgEl = document.getElementById(`img-rutas-${itemId}-${i + 1}`);
+            if (imgEl) imgEl.style.display = 'none';
+            document.getElementById(`dot-rutas-${itemId}-${i + 1}`).classList.remove('active');
+        });
+        document.getElementById(`dot-rutas-${itemId}-0`).classList.remove('active');
+
+        // Show current
+        if (newIdx === 0) {
+            document.getElementById(`map-${itemId}`).style.opacity = '1';
+            document.getElementById(`map-${itemId}`).style.pointerEvents = 'auto';
+            // Invalidate size for leaflet map
+            const mapObj = window.leafletMaps.find(m => m.getContainer().id === `map-${itemId}`);
+            if (mapObj) mapObj.invalidateSize();
+        } else {
+            const imgEl = document.getElementById(`img-rutas-${itemId}-${newIdx}`);
+            if (imgEl) imgEl.style.display = 'block';
+        }
+
+        document.getElementById(`dot-rutas-${itemId}-${newIdx}`).classList.add('active');
+        mediaEl.setAttribute('data-idx', newIdx);
+    }
+}
+
+// --- MAPAMUNDI ---
+let worldMapInstance = null;
+
+function renderMapamundi() {
+    if (!appData.settings) return;
+
+    document.getElementById('mapamundi-title').innerHTML = appData.settings.mapamundiTitle || "olIMpo se va de viaje";
+    document.getElementById('mapamundi-subtitle').innerHTML = appData.settings.mapamundiSubtitle || "\"and the goal is one day travel the world beside my world\"";
+
+    const navMapamundi = document.getElementById('nav-mapamundi');
+    if (navMapamundi) navMapamundi.textContent = document.getElementById('mapamundi-title').textContent;
+
+
+
+    if (!appData.visitedCountries) {
+        appData.visitedCountries = [];
+    }
+
+    if (worldMapInstance) {
+        // Ya está inicializado, actualizamos la capacidad de seleccionar basándonos en el modo editor
+        worldMapInstance.params.regionsSelectable = isEditorMode;
+        return;
+    }
+
+    const mapEl = document.getElementById('world-map');
+    if (!mapEl) return;
+
+    try {
+        worldMapInstance = new jsVectorMap({
+            selector: '#world-map',
+            map: 'world',
+            backgroundColor: 'transparent',
+            zoomOnScroll: false,
+            regionsSelectable: isEditorMode,
+            regionsSelectableOne: false,
+            regionStyle: {
+                initial: {
+                    fill: '#112c5a', // var(--c-navy)
+                    fillOpacity: 1,
+                    stroke: 'none',
+                    strokeWidth: 0,
+                    strokeOpacity: 1
+                },
+                hover: {
+                    fillOpacity: 0.8,
+                    cursor: 'pointer'
+                },
+                selected: {
+                    fill: '#a6511f' // var(--c-orange)
+                },
+                selectedHover: {}
+            },
+            selectedRegions: appData.visitedCountries,
+            onRegionClick: function (event, code) {
+                if (!isEditorMode) {
+                    event.preventDefault(); // Evita que se seleccione
+                    return;
+                }
+
+                const index = appData.visitedCountries.indexOf(code);
+                if (index > -1) {
+                    appData.visitedCountries.splice(index, 1);
+                } else {
+                    appData.visitedCountries.push(code);
+                }
+                hasUnsavedChanges = true;
+            }
+        });
+    } catch (e) {
+        console.warn("Error inicializando Mapamundi:", e);
+    }
 }
 
 // --- MAPAS LEAFLET ---
@@ -404,12 +584,12 @@ function initLeafletMaps() {
     // Destruir mapas antiguos para evitar el error "Map container is already initialized"
     if (window.leafletMaps && window.leafletMaps.length > 0) {
         window.leafletMaps.forEach(map => {
-            try { map.remove(); } catch(e) {}
+            try { map.remove(); } catch (e) { }
         });
     }
     window.leafletMaps = [];
 
-    const maps = document.querySelectorAll('.route-map');
+    const maps = document.querySelectorAll('.route-map-container');
     maps.forEach((mapEl) => {
         const gpxFile = mapEl.getAttribute('data-gpx');
         const mapId = mapEl.id;
@@ -436,7 +616,7 @@ function initLeafletMaps() {
                 }).addTo(map);
 
                 window.leafletMaps.push(map);
-            } catch(e) {
+            } catch (e) {
                 console.warn("Leaflet error:", e);
             }
         }
@@ -544,6 +724,11 @@ window.openModal = function (type, isEdit = false) {
                 <input type="text" id="ruta-gpx" style="width:100%; padding:8px;" value="${item.gpx || ''}" placeholder="Ej: rutas/mi_actividad.gpx">
                 <small class="text-muted">Ej: rutas/mi_actividad.gpx (Debes arrastrar el archivo GPX a tu carpeta "rutas").</small>
             </div>
+            <div style="margin-bottom: 10px;">
+                <label>URLs de Imágenes (separadas por coma) (Opcional):</label><br>
+                <textarea id="ruta-images" style="width:100%; padding:8px; min-height:60px;" placeholder="https://ejemplo.com/foto1.jpg, https://ejemplo.com/foto2.jpg">${item.images ? item.images.join(', ') : ''}</textarea>
+                <small class="text-muted">Hay que subir las fotos a Imgur.com o Postimages.org y pega el enlace que acaba en \".jpg\" o parecido aquí.</small>
+            </div>
             <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
             <h4>Estadísticas</h4>
             <div id="stats-container">
@@ -564,7 +749,7 @@ window.openModal = function (type, isEdit = false) {
             </div>
             <div style="margin-bottom: 10px;"><label>URLs de Imágenes (separadas por coma):</label><br>
                 <textarea id="prod-images" style="width:100%; padding:8px; min-height:80px;" placeholder="https://ejemplo.com/foto1.jpg, https://ejemplo.com/foto2.jpg">${item.images ? item.images.join(', ') : ''}</textarea>
-                <small class="text-muted">Si quieres fotos propias, súbelas gratis a Imgur.com o Postimages.org y pega el enlace aquí.</small>
+                <small class="text-muted">Hay que subir las fotos a Imgur.com o Postimages.org y pega el enlace que acaba en \".jpg\" o parecido aquí.</small>
             </div>
             <div style="margin-bottom: 10px;"><label><input type="checkbox" id="prod-visible" ${item.visible !== false ? 'checked' : ''}> Visible públicamente</label></div>
         `;
@@ -607,6 +792,7 @@ window.saveModal = function () {
     if (currentModalType === 'settings') {
         if (!appData.settings) appData.settings = {};
         appData.settings.heroBg = document.getElementById('set-heroBg').value;
+        hasUnsavedChanges = true;
         closeModal();
         renderApp();
         return;
@@ -639,6 +825,7 @@ window.saveModal = function () {
             tag: document.getElementById('ruta-tag').value,
             desc: document.getElementById('ruta-desc').value,
             gpx: document.getElementById('ruta-gpx').value,
+            images: document.getElementById('ruta-images').value.split(',').map(s => s.trim()).filter(s => s),
             visible: document.getElementById('ruta-visible').checked,
             stats: stats
         };
