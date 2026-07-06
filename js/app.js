@@ -1,7 +1,7 @@
 // Estado Inicial de la Aplicación
 let appData = {
     settings: {
-        heroTitle: "El mejor club de deportes, siempre en evolución",
+        heroTitle: "Bienvenido al club de deportes más querido",
         heroSubtitle: "Fruto de un amor por sí mismos y por nuestro compañero de vida.",
         heroBg: "https://i.imgur.com/DVZpbuJ.png",
         rutasTitle: "Actividades",
@@ -64,12 +64,25 @@ let sortableProductos = null;
 const JSONBIN_URL = "https://api.jsonbin.io/v3/b/6a03a756250b1311c33f74c6";
 let SECRET_KEY = localStorage.getItem('olimpo_api_key') || "";
 
+// Protección contra cierre accidental de pestaña si hay cambios
+window.addEventListener('beforeunload', (e) => {
+    if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = ''; // Requerido para navegadores modernos
+    }
+});
+
 // --- INICIALIZACIÓN ---
 document.addEventListener("DOMContentLoaded", () => {
+    // Renderizado inmediato (0 milisegundos) con caché local
+    renderApp();
+    setupEditorControls();
+    setupEditableTitles();
+
+    // Consulta en segundo plano
     loadFromCloud().then(() => {
+        // Re-renderizado silencioso con datos frescos de la nube
         renderApp();
-        setupEditorControls();
-        setupEditableTitles();
     });
 });
 
@@ -298,7 +311,13 @@ function renderRutas() {
             `;
         }
 
-        const imgsHtml = images.map((img, i) => `<img src="${img}" class="carousel-img" id="img-rutas-${ruta.id}-${i + 1}" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; z-index:2; object-fit:cover;">`).join('');
+        const imgsHtml = images.map((img, i) => {
+            const isVid = img.match(/\.(mp4|webm|ogg)$/i);
+            if (isVid) {
+                return `<video src="${img}" class="carousel-img" id="img-rutas-${ruta.id}-${i + 1}" preload="metadata" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; z-index:2; object-fit:cover;" autoplay loop muted playsinline onclick="this.muted = !this.muted;"></video>`;
+            }
+            return `<img src="${img}" class="carousel-img" id="img-rutas-${ruta.id}-${i + 1}" loading="lazy" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; z-index:2; object-fit:cover;">`;
+        }).join('');
 
         div.innerHTML = `
             <div class="route-media" id="media-rutas-${ruta.id}" data-idx="0" data-total="${images.length + 1}">
@@ -386,7 +405,18 @@ function renderProductos() {
         let imgHtml = '';
         if (prod.images && prod.images.length > 0) {
             const hasMultiple = prod.images.length > 1;
-            imgHtml = `<img src="${prod.images[0]}" alt="${prod.name}" class="carousel-img" id="img-${prod.id}" data-idx="0">`;
+            const mediaTags = prod.images.map((img, i) => {
+                const isVid = img.match(/\.(mp4|webm|ogg)$/i);
+                const displayStyle = i === 0 ? 'block' : 'none';
+                if (isVid) {
+                    return `<video src="${img}" class="carousel-img" id="img-${prod.id}-${i}" data-idx="${i}" preload="metadata" style="display:${displayStyle}; position:absolute; top:0; left:0; width:100%; height:100%; z-index:2; object-fit:cover;" autoplay loop muted playsinline onclick="this.muted = !this.muted;"></video>`;
+                }
+                // Las primeras fotos del carrusel se cargan normal (i === 0), las ocultas con lazy loading
+                const lazyAttr = i === 0 ? '' : 'loading="lazy"';
+                return `<img src="${img}" alt="${prod.name}" class="carousel-img" id="img-${prod.id}-${i}" data-idx="${i}" ${lazyAttr} style="display:${displayStyle}; position:absolute; top:0; left:0; width:100%; height:100%; z-index:2; object-fit:cover;">`;
+            }).join('');
+
+            imgHtml = `<div id="media-${prod.id}" data-idx="0" data-total="${prod.images.length}" style="position:relative; width:100%; height:100%;">${mediaTags}</div>`;
             if (hasMultiple) {
                 imgHtml += `
                     <button class="carousel-btn prev" onclick="nextImg('productos', '${prod.id}', -1, event)">&#10094;</button>
@@ -450,20 +480,28 @@ window.nextImg = function (type, itemId, step, event) {
         const prod = appData.productos.find(p => p.id === itemId);
         if (!prod || prod.images.length <= 1) return;
 
-        const imgEl = document.getElementById(`img-${itemId}`);
-        let currentIdx = parseInt(imgEl.getAttribute('data-idx'));
+        const mediaContainer = document.getElementById(`media-${itemId}`);
+        if (!mediaContainer) return;
+        let currentIdx = parseInt(mediaContainer.getAttribute('data-idx'));
         let newIdx = currentIdx + step;
 
         if (newIdx < 0) newIdx = prod.images.length - 1;
         if (newIdx >= prod.images.length) newIdx = 0;
 
-        imgEl.src = prod.images[newIdx];
-        imgEl.setAttribute('data-idx', newIdx);
-
+        // Hide all
         prod.images.forEach((_, i) => {
+            const el = document.getElementById(`img-${itemId}-${i}`);
+            if (el) el.style.display = 'none';
             document.getElementById(`dot-${itemId}-${i}`).classList.remove('active');
         });
-        document.getElementById(`dot-${itemId}-${newIdx}`).classList.add('active');
+
+        // Show new
+        const newEl = document.getElementById(`img-${itemId}-${newIdx}`);
+        if (newEl) newEl.style.display = 'block';
+
+        mediaContainer.setAttribute('data-idx', newIdx);
+        const dotEl = document.getElementById(`dot-${itemId}-${newIdx}`);
+        if (dotEl) dotEl.classList.add('active');
     } else if (type === 'rutas') {
         const ruta = appData.rutas.find(r => r.id === itemId);
         const images = ruta.images || [];
@@ -525,6 +563,18 @@ function renderMapamundi() {
     if (worldMapInstance) {
         // Ya está inicializado, actualizamos la capacidad de seleccionar basándonos en el modo editor
         worldMapInstance.params.regionsSelectable = isEditorMode;
+        // Actualizamos los países seleccionados (por si han llegado nuevos de la nube)
+        try {
+            worldMapInstance.clearSelectedRegions();
+            if (appData.visitedCountries.length > 0) {
+                worldMapInstance.setSelected(appData.visitedCountries);
+            }
+        } catch (e) {
+            console.warn("No se pudo actualizar regiones, recreando mapa...", e);
+            document.getElementById('world-map').innerHTML = '';
+            worldMapInstance = null;
+            return renderMapamundi();
+        }
         return;
     }
 
